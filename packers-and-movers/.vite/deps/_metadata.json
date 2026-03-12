@@ -1,0 +1,91 @@
+{
+  "hash": "67f6c0d2",
+  "configHash": "b6e01529",
+  "lockfileHash": "a80eeb6f",
+  "browserHash": "8c217a66",
+  "optimized": {
+    "react": {
+      "src": "../../node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "d5e48dae",
+      "needsInterop": true
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "857f33ad",
+      "needsInterop": true
+    },
+    "react-router": {
+      "src": "../../node_modules/react-router/dist/development/index.mjs",
+      "file": "react-router.js",
+      "fileHash": "277f352c",
+      "needsInterop": false
+    },
+    "framer-motion": {
+      "src": "../../node_modules/framer-motion/dist/es/index.mjs",
+      "file": "framer-motion.js",
+      "fileHash": "b4d7e70a",
+      "needsInterop": false
+    },
+    "@mui/icons-material/Menu": {
+      "src": "../../node_modules/@mui/icons-material/esm/Menu.js",
+      "file": "@mui_icons-material_Menu.js",
+      "fileHash": "1b2d2809",
+      "needsInterop": false
+    },
+    "@mui/icons-material/Close": {
+      "src": "../../node_modules/@mui/icons-material/esm/Close.js",
+      "file": "@mui_icons-material_Close.js",
+      "fileHash": "455ad794",
+      "needsInterop": false
+    },
+    "@mui/icons-material/Phone": {
+      "src": "../../node_modules/@mui/icons-material/esm/Phone.js",
+      "file": "@mui_icons-material_Phone.js",
+      "fileHash": "67e9a208",
+      "needsInterop": false
+    },
+    "@mui/icons-material/ChevronRight": {
+      "src": "../../node_modules/@mui/icons-material/esm/ChevronRight.js",
+      "file": "@mui_icons-material_ChevronRight.js",
+      "fileHash": "13e4d1b8",
+      "needsInterop": false
+    },
+    "@mui/material": {
+      "src": "../../node_modules/@mui/material/esm/index.js",
+      "file": "@mui_material.js",
+      "fileHash": "92eeb35c",
+      "needsInterop": false
+    },
+    "@mui/icons-material/Inventory2Outlined": {
+      "src": "../../node_modules/@mui/icons-material/esm/Inventory2Outlined.js",
+      "file": "@mui_icons-material_Inventory2Outlined.js",
+      "fileHash": "b0d88c0c",
+      "needsInterop": false
+    },
+    "@mui/icons-material/LocalShippingOutlined": {
+      "src": "../../node_modules/@mui/icons-material/esm/LocalShippingOutlined.js",
+      "file": "@mui_icons-material_LocalShippingOutlined.js",
+      "fileHash": "9979b4f2",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "chunk-YTOT4KTD": {
+      "file": "chunk-YTOT4KTD.js"
+    },
+    "chunk-C6WWHQR7": {
+      "file": "chunk-C6WWHQR7.js"
+    },
+    "chunk-IYMWJN4F": {
+      "file": "chunk-IYMWJN4F.js"
+    },
+    "chunk-PH75ZKYM": {
+      "file": "chunk-PH75ZKYM.js"
+    },
+    "chunk-KQTB2XQD": {
+      "file": "chunk-KQTB2XQD.js"
+    }
+  }
+}

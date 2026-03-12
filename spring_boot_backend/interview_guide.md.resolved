@@ -1,0 +1,150 @@
+# Packers and Movers Management System - Interview Preparation Guide
+
+This guide contains detailed, easy-to-understand answers tailored to your Spring Boot & React project. 
+
+---
+
+### 1. Project Flow from Frontend to Backend
+**What happens when a user sends a request?**
+1. **Frontend (React)**: The user interacts with the UI (e.g., clicks "Login" or "Book Service"). React captures this input and makes an HTTP request (using `axios` or `fetch`) to your backend REST API.
+2. **Controller (Spring Boot)**: The request first hits the DispatcherServlet, which routes it to the correct `@RestController` (e.g., `UserController` or `BookingController`).
+3. **DTO & Validation**: The incoming JSON data is converted into a Java DTO (Data Transfer Object).
+4. **Service Layer**: The Controller passes the DTO to the `@Service` class. Here, all the business logic is executed (e.g., calculating cost, validating user).
+5. **Repository Layer (JPA)**: The Service layer calls the `@Repository` interface (Spring Data JPA) to interact with the database.
+6. **Database (MySQL)**: JPA translates the Java code into SQL queries, executes them on MySQL, and returns the entity data.
+7. **Response to Frontend**: The data is mapped back to a Response DTO, passed up to the Controller, and sent back as a JSON HTTP response to the React frontend, which then updates the UI.
+
+---
+
+### 2. JWT (JSON Web Token) and Security
+#### First-Time Token Generation & Auth Flow
+1. User submits Email and Password.
+2. The `AuthenticationManager` verifies these credentials against the database.
+3. If valid, the `JwtUtils.generateToken(User)` method is called.
+4. It creates a JWT containing the user's email, ID, and Roles, signs it with a secret key, and sends it back to the client.
+5. **Subsequent Requests**: The frontend attaches this JWT in the `Authorization` header (`Bearer <token>`).
+6. **Authorization Flow**: The `CustomJwtVerificationFilter` intercepts every request, extracts the JWT, verifies its signature, reads the role, and sets the user's context in `SecurityContextHolder`. [SecurityConfiguration](file:///e:/Sunbeam_KDAC/project/spring_boot_backend/src/main/java/com/backend/security/SecurityConfiguration.java#27-113) then checks if this role has permission to access the requested API (e.g., `.hasRole("DRIVER")`).
+
+#### What is JWT? Why use it?
+- **What**: JWT is a stateless, secure standard for exchanging information (claims) between a client and a server as a JSON object.
+- **Why**: It is **stateless**. The server doesn’t need to store session data in memory. This makes the application easily scalable and fast.
+- **Alternatives to JWT**: 
+  - Session-based authentication (Cookies + Server-side Sessions)
+  - OAuth 2.0 (like "Login with Google")
+  - Basic Authentication (sending username/password on every request - very insecure).
+
+#### JWT Expiration in Project
+- It is set in [application.properties](file:///e:/Sunbeam_KDAC/project/spring_boot_backend/target/classes/application.properties) as `jwt.expiration.time=72000000000` (which is highly extended for development purposes). [JwtUtils](file:///e:/Sunbeam_KDAC/project/spring_boot_backend/src/main/java/com/backend/security/JwtUtils.java#19-78) reads this value and adds it to the token’s creation time (`iat`) to set the `exp` claim.
+
+---
+
+### 3. Database Design
+#### Why MySQL? Why not others?
+- **Why MySQL**: It is a highly reliable, open-source Relational Database Management System (RDBMS). Since your project involves transactions, structured relationships, and ACID properties (e.g., strictly mapping a Payment to a Booking), a relational DB is perfect.
+- **Why not NoSQL (like MongoDB)?**: NoSQL is great for unstructured document data, but Packers and Movers relies heavily on structured relationships (User -> Booking -> Payment -> Staff), which are best handled by foreign keys and JOINs in MySQL.
+
+#### How many tables did you use?
+You have **13 Real Database Tables**. 
+- Entity Tables: `Address`, `Booking`, `BookingAssignment`, `BookingGoods`, `City`, `Customer`, `GoodsMaster`, `Payment`, `ServiceType`, `Staff`, `State`, `User`, `Vehicle`.
+- Furthermore, classes like `BaseEntity` act as `@MappedSuperclass` (not a table, just inherited fields). Classes like `UserRole`, `StaffRole`, `BookingStatus` are ENUMs stored as Strings or Integers in columns, not as separate tables.
+
+---
+
+### 4. Multithreading
+#### Have we implemented multithreading?
+**No**, we have not explicitly created new threads (like `Runnable` or `@Async`) in our code.
+- **Why not?**: Spring Boot controllers are inherently multi-threaded. The embedded Tomcat server automatically assigns a separate worker thread from its thread pool to handle every single incoming HTTP request. Thus, standard operations process concurrently without our manual intervention.
+- **How to implement in future?**: If we need to send Booking Confirmation Emails or process long PDF generation, we can annotate a service method with `@Async`. This offloads the task to a background thread so the user doesn't have to wait for the email to send.
+
+#### Is a multithreaded app good or bad?
+- **Good**: It maximizes CPU utilization and allows multiple tasks to run in parallel, improving application responsiveness and performance.
+- **Bad (Challenges)**: It introduces complexity like race conditions, deadlocks, and thread safety issues. Managing shared data across threads requires careful synchronization.
+
+---
+
+### 5. Microservices
+#### Have you used Microservices?
+**No**, we developed a **Monolithic Architecture** where all modules (User, Booking, Payment, Staff) are bundled together into a single Spring Boot Application.
+- **Why not?**: The project scope and team size are currently small. A monolith is easier to develop, test, debug, and deploy initially.
+- **How to implement later?**: 
+  1. Break the monolith into smaller separate Spring Boot projects (e.g., `UserService`, `BookingService`, `PaymentService`).
+  2. Give each service its own separate database so they are decoupled.
+  3. Use an API Gateway to route frontend requests to the correct service.
+  4. Use Eureka for Service Discovery and OpenFeign/RestTemplate for service-to-service communication.
+
+---
+
+### 6. Spring Security Architecture
+Spring Security acts as a wall in front of your controllers through a "Filter Chain".
+1. **SecurityFilterChain Bean**: Configured in [SecurityConfiguration.java](file:///e:/Sunbeam_KDAC/project/spring_boot_backend/src/main/java/com/backend/security/SecurityConfiguration.java). It disables CSRF, sets session to stateless, and defines authorization rules.
+2. **Matchers**: It defines public endpoints (like `/users/signin` `permitAll()`) and protected endpoints (`/api/admin/**` `hasRole("ADMIN")`).
+3. **Filter**: We added `.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)`. This means our custom JWT filter checks the token *before* the default username/password filter even runs. If the token is valid, Spring lets the request reach the Controller.
+
+---
+
+### 7. Roles in the Project
+You have multiple enums handling roles:
+- `UserRole`: **CUSTOMER**, **ADMIN**, **STAFF**
+- `StaffRole`: **DRIVER**, **MANAGER**, **ADMIN**, **HELPER**
+**How defined**: In the JWT token, the role is prefixed with `ROLE_` (e.g., `ROLE_DRIVER`). Spring Security uses this string prefix internally in the `hasRole("DRIVER")` check to authorize API access.
+
+---
+
+### 8. Explain REST API with Example
+**REST (Representational State Transfer)** is an architectural style for designing networked applications over HTTP. It uses standard HTTP methods (GET, POST, PUT, DELETE) and standard data formats (JSON/XML).
+- **Example**: 
+  - `GET /api/bookings/all` -> Retrieves a list of all bookings.
+  - `POST /users/signin` -> Creates an authentication session/returns a token.
+  - The URL identifies the "Resource" (bookings, users) and the HTTP method defines the "Action" (Read, Create).
+
+---
+
+### 9. Spring Boot & Annotations
+#### What is JPA?
+**JPA (Java Persistence API)** is a specification for Object-Relational Mapping (ORM) in Java. It allows you to map Java Objects (`@Entity` classes) directly to database tables, avoiding manual SQL writing. Hibernate is the underlying tool that implements this specification.
+
+#### What is @SpringBootApplication?
+It is the entry point of your app. It is a combination of three annotations:
+1. `@EnableAutoConfiguration`: Tells Spring to automatically configure beans based on what is on the classpath.
+2. `@ComponentScan`: Tells Spring to scan the current and sub-packages for components (Controllers, Services).
+3. `@Configuration`: Marks the class as a source of bean definitions.
+
+#### Common Annotations Used:
+- `@RestController`: Tells Spring this class handles HTTP requests and returns JSON directly (combo of `@Controller` + `@ResponseBody`).
+- `@RequestMapping("/path")`: Maps HTTP requests to handler methods.
+- `@Service`, `@Repository`: Special types of `@Component` to denote business logic and database access classes.
+- `@Entity` & `@Table`: Marks a class as a JPA entity mapped to a DB table.
+- `@Id` & `@GeneratedValue`: Denotes the primary key and how it auto-increments.
+- `@Autowired`: Automatically injects dependencies (though you used constructor injection with `@RequiredArgsConstructor` via Lombok).
+- `@Bean`: Tells Spring to register the returned object as a managed bean in the context.
+
+---
+
+### 10. React Concepts: Mounting and Demounting
+(Since your frontend is React, this question targets React component lifecycles)
+- **Mounting**: When a React Component is created and inserted into the browser's DOM for the first time. In functional components, the `useEffect` hook with an empty dependency array `[]` represents this (e.g., fetching state/city lists when the page first loads).
+- **Demounting (Unmounting)**: When a React Component is completely removed from the DOM (e.g., user navigates to a totally different page). In `useEffect`, returning a cleanup function handles this.
+
+---
+
+### 11. Data Structures Used
+- **List / ArrayList**: Extensively used in Repositories (e.g., returning `List<Booking>`) and DTOs to hold multiple ordered records.
+- **HashMap / Map**: Used in [JwtUtils.java](file:///e:/Sunbeam_KDAC/project/spring_boot_backend/src/main/java/com/backend/security/JwtUtils.java) (`Map.of("user_id", ... )`) to store and pass custom claims (Key-Value pairs) mapping user info into the JWT payload.
+- **Enums**: Used to represent fixed sets of constants (Roles, Status).
+
+---
+
+### 12. JVM Architecture Overview
+The JVM (Java Virtual Machine) executes Java bytecodes.
+1. **Class Loader Subsystem**: Loads, links, and initializes the [.class](file:///e:/Sunbeam_KDAC/project/spring_boot_backend/target/classes/com/backend/Application.class) files.
+2. **Runtime Data Areas**: 
+   - **Method Area**: Stores class structures (metadata, constants).
+   - **Heap**: Stores all objects created by the `new` keyword (like your Entities, DTOs).
+   - **Stack**: Stores local variables and method calls (one stack per thread).
+3. **Execution Engine**: Reads the bytecode and executes it (contains the Interpreter, JIT Compiler, and Garbage Collector).
+
+---
+
+### 13. Application Configuration Location
+- **Where is it stored?**: [src/main/resources/application.properties](file:///e:/Sunbeam_KDAC/project/spring_boot_backend/src/main/resources/application.properties)
+- **In which jar?**: When you package the app (using Maven/Gradle create `.jar`), this file is bundled inside the root of the executable jar file (i.e. inside `target/backend-0.0.1-SNAPSHOT.jar` at the `/` path or `/BOOT-INF/classes/application.properties`).

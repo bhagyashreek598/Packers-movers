@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply font-sans;
+}
+
+
+@theme {
+  /* Default Colors (Light Mode) */
+  --color-primary: #0052CC;
+  --color-background: #ffffff;
+  --color-text: #1a1a1a;
+}
+
+@variant dark (&:where(.dark, .dark *));
+
+/* Dark Mode Overrides */
+@layer base {
+  .dark {
+    --color-primary: #c40700;
+    --color-background: #121212;
+    --color-text: #f3f4f6;
+  }
+}
